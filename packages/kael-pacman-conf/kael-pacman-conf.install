@@ -1,0 +1,17 @@
+post_install() {
+    echo ">>> Kael Athenaeum: Binding repository..."
+    # Add the include line if it doesn't already exist
+    grep -qxF 'Include = /etc/pacman.d/kael-os.conf' /etc/pacman.conf || echo 'Include = /etc/pacman.d/kael-os.conf' >> /etc/pacman.conf
+    echo ">>> Run 'sudo pacman -Syu' to synchronize."
+}
+
+post_upgrade() {
+    post_install
+}
+
+post_remove() {
+    echo ">>> Kael Athenaeum: Unbinding repository..."
+    # Remove the include line
+    sed -i "/Include = \/etc\/pacman.d\/kael-os.conf/d" /etc/pacman.conf
+}
+

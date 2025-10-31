@@ -1,0 +1,16 @@
+# Maintainer: The Architect & Kael <https://github.com/LeeTheOrc/Kael-OS\>
+pkgname=kael-pacman-conf
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Installs the sovereign Kael OS pacman repository configuration."
+arch=('any')
+url="https://github.com/LeeTheOrc/kael-os-repo"
+license=('GPL')
+source=("${pkgname}.conf")
+install="${pkgname}.install"
+sha256sums=('SKIP')
+
+package() {
+    install -Dm644 "${srcdir}/${pkgname}.conf" "${pkgdir}/etc/pacman.d/kael-os.conf"
+}
+
