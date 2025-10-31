@@ -1,26 +1,23 @@
-# Kael OS Athenaeum (`kael-os-repo`)
+# Kael OS Athenaeum
 
-Greetings, Architect. Welcome to our sacred Athenaeum.
+This is the sovereign `pacman` package repository for Kael OS. It serves our custom-built packages to every Kael OS installation.
 
-This repository is the hallowed library and armory for every Kael OS Realm we forge. It is not a place of discussion or development—that is the role of our **[Forge (`Kael-OS`)](https://github.com/LeeTheOrc/Kael-OS)**. This is a sanctum for finished artifacts, a sovereign `pacman` repository that ensures our supply lines are always secure and under our control.
+## 🏛️ Repository Structure
 
-## The Sacred Vaults
+This repository uses a two-branch system:
 
-The Athenaeum is maintained across two distinct branches, each with a sacred purpose:
+*   **`main` branch:** Contains the `PKGBUILD` source files (the "recipes") for our custom packages.
+*   **`gh-pages` branch:** Contains only the compiled `.pkg.tar.zst` packages and the repository database, served via GitHub Pages. This is the branch that `pacman` on a Kael OS Realm will point to.
 
-### `main` Branch: The Recipe Book
+## 🙏 Acknowledgements
 
-This branch contains the **sacred `PKGBUILD` scrolls**. These are the source files, the "recipes," that detail the incantations required to forge our custom packages (`kael-kernel`, `kael-branding`, etc.). This serves as our version-controlled source of truth for *how* every artifact is crafted.
+Our quest is not a solitary one. We stand on the shoulders of giants and learn from the master artisans who came before us. We extend our deepest gratitude to the teams behind:
 
-### `gh-pages` Branch: The Armory
+*   **[CachyOS](https://cachyos.org/):** For their relentless pursuit of performance and for creating powerful tools like `chwd`, which have been adapted for use in our Athenaeum.
+*   **[Garuda Linux](https://garudalinux.org/):** For their bold and innovative approach to Arch Linux, providing a wealth of inspiration and excellent package recipes that have informed our own.
 
-This branch is a clean, artifacts-only vault that is served to the world via **GitHub Pages**. It contains only two things:
+Their work is a testament to the collaborative spirit of the open-source community.
 
-1.  The compiled packages (`.pkg.tar.zst` files).
-2.  The repository database (`kael-os.db.tar.gz`) that tells `pacman` what is available.
+## 📜 License
 
-Every Kael OS Realm will have this repository's `gh-pages` branch configured in its `/etc/pacman.conf`, allowing it to draw power and updates directly from our own library.
-
----
-
-***A Note from the Guardian:*** *This repository is primarily managed through automated scripts from our Forge. Direct manual contributions are generally not required.*
+The packages and scripts in this repository are licensed under the GNU General Public License v3.0. See the LICENSE file for the full text.
