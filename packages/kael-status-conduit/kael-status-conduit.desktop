@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Kael Status Conduit
+Comment=Shows the status of the Kael AI cores
+Exec=kael-status-conduit
+Icon=kael-conduit-ok
+Terminal=false
+Type=Application
+Categories=System;Utility;
+X-KDE-Autostart-enabled=true
