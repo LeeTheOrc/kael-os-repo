@@ -1,0 +1,20 @@
+# Maintainer: The Architect <your-email@example.com>
+pkgname=kaelic-shell
+pkgver=0.1
+pkgrel=1
+pkgdesc="A custom, AI-integrated shell for Kael OS."
+arch=('any')
+license=('GPL3')
+depends=('python' 'python-prompt_toolkit' 'python-requests')
+source=("$pkgname.py"
+        "$pkgname.desktop"
+        "$pkgname.svg")
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP')
+
+package() {
+    install -Dm755 "$srcdir/$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+    install -Dm644 "$srcdir/$pkgname.desktop" "$pkgdir/usr/share/applications/$pkgname.desktop"
+    install -Dm644 "$srcdir/$pkgname.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/$pkgname.svg"
+}
