@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 import json
 import webbrowser
@@ -287,7 +288,7 @@ class GeminiThread(QThread):
     def run(self):
         try:
             genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(self.prompt, stream=True)
             for chunk in response:
                 self.response_chunk.emit(chunk.text)
