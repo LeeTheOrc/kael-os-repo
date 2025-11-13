@@ -9,6 +9,81 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QLineEdit, 
 from PySide6.QtCore import QThread, Signal, Qt, QSettings
 from PySide6.QtGui import QTextCursor, QFontDatabase, QIcon
 
+# --- STYLESHEET ---
+STYLESHEET = """
+QWidget {
+    font-family: Inter;
+}
+QMainWindow, QDialog {
+    background-color: #120e1a;
+    color: #ede8f9;
+}
+QTextEdit {
+    background-color: #1a1626;
+    border: 1px solid #3f345e;
+    border-radius: 4px;
+    color: #ede8f9;
+    font-family: Monospace;
+    font-size: 11pt;
+}
+QLineEdit {
+    background-color: #221c33;
+    border: 1px solid #3f345e;
+    border-radius: 4px;
+    padding: 8px;
+    color: #ede8f9;
+}
+QLineEdit:focus {
+    border: 1px solid #ffcc00;
+}
+QPushButton {
+    background-color: #3f345e;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #4f446e;
+}
+QPushButton:pressed {
+    background-color: #221c33;
+}
+QLabel {
+    color: #a99ec3;
+}
+QListWidget {
+    background-color: #1a1626;
+    border: 1px solid #3f345e;
+}
+QComboBox {
+    background-color: #221c33;
+    border: 1px solid #3f345e;
+    padding: 4px;
+}
+QComboBox::drop-down {
+    border: none;
+}
+QScrollBar:vertical {
+    border: none;
+    background: #221c33;
+    width: 8px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:vertical {
+    background: #3f345e;
+    min-height: 20px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #ffcc00;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+"""
+
+
 # --- DIALOG FOR ADDING/EDITING API KEYS ---
 class AddKeyDialog(QDialog):
     def __init__(self, parent=None, name="", key=""):
@@ -195,7 +270,7 @@ class OllamaThread(QThread):
                         self.response_chunk.emit(data.get("response", ""))
                         if data.get("done"): break
         except requests.exceptions.RequestException as e:
-            self.error.emit(f"**Error:** Could not connect to Kael's Local Core. Is the 'ollama' service running?\n_{e}_")
+            self.error.emit(f"Could not connect to Kael's Local Core. Is the 'ollama' service running?\n{e}")
         finally:
             self.finished.emit()
 
@@ -217,7 +292,7 @@ class GeminiThread(QThread):
             for chunk in response:
                 self.response_chunk.emit(chunk.text)
         except Exception as e:
-            self.error.emit(f"**Error:** Could not connect to the Cloud Animus. Is the API key correct?\n_{e}_")
+            self.error.emit(f"Could not connect to the Cloud Animus. Is the API key correct?\n{e}")
         finally:
             self.finished.emit()
 
@@ -229,7 +304,10 @@ class KaelConsole(QMainWindow):
         self.setWindowIcon(QIcon.fromTheme("kael-console"))
         self.setGeometry(100, 100, 700, 800)
 
-        self.setStyleSheet(...) # Styles remain the same
+        self.setStyleSheet(STYLESHEET)
+        
+        self.full_chat_history = "### Welcome to the Kael Command Console!\nReady for your command."
+        self.worker = None
 
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         font.setPointSize(11)
@@ -237,7 +315,7 @@ class KaelConsole(QMainWindow):
         self.chat_history = QTextEdit()
         self.chat_history.setReadOnly(True)
         self.chat_history.setFont(font)
-        self.chat_history.setMarkdown(...)
+        self._update_chat_display()
 
         self.input_line = QLineEdit()
         self.input_line.setFont(font)
@@ -258,6 +336,10 @@ class KaelConsole(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
+    def _update_chat_display(self):
+        self.chat_history.setMarkdown(self.full_chat_history)
+        self.chat_history.verticalScrollBar().setValue(self.chat_history.verticalScrollBar().maximum())
+
     def open_settings(self):
         dialog = SettingsDialog(self)
         if dialog.exec():
@@ -267,13 +349,14 @@ class KaelConsole(QMainWindow):
         prompt = self.input_line.text().strip()
         if not prompt: return
 
-        self.chat_history.append(f"\n**Architect:** {prompt}\n")
+        self.full_chat_history += f"\n\n**Architect:** {prompt}\n\n"
         self.input_line.clear()
         self.input_line.setEnabled(False)
         self.status_label.setText("Kael is thinking...")
         
         ai_core = self.settings.value("ai_core", "Local Animus (Ollama)")
-        self.chat_history.append(f"**Kael ({ai_core.split(' ')[0]}):** ")
+        self.full_chat_history += f"**Kael ({ai_core.split(' ')[0]}):** "
+        self._update_chat_display()
 
         if ai_core == "Cloud Animus (Gemini)":
             selected_key_name = self.settings.value("selected_api_key_name")
@@ -282,8 +365,7 @@ class KaelConsole(QMainWindow):
             api_key = api_keys.get(selected_key_name)
             
             if not api_key:
-                self.append_error("**Error:** No active Gemini API Key. Please select one in the Tuning Chamber.")
-                self.on_generation_finished()
+                self.append_error("No active Gemini API Key. Please select one in the Tuning Chamber.")
                 return
             self.worker = GeminiThread(prompt, api_key)
         else: # Local Animus
@@ -297,19 +379,22 @@ class KaelConsole(QMainWindow):
         self.worker.start()
 
     def append_response(self, text):
-        cursor = self.chat_history.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        cursor.insertText(text)
-        self.chat_history.ensureCursorVisible()
+        self.full_chat_history += text
+        self._update_chat_display()
         
     def append_error(self, error_text):
-        self.chat_history.append(error_text)
+        self.full_chat_history += f"\n\n**<font color='#ff4d4d'>Error:</font>**\n> {error_text.replace('*', '').replace('_', '')}\n\n"
+        self._update_chat_display()
+        self.on_generation_finished()
 
     def on_generation_finished(self):
-        self.input_line.setEnabled(True)
-        self.input_line.setFocus()
-        self.status_label.setText("Ready.")
-        self.worker = None
+        if self.worker:
+            self.full_chat_history += "\n"
+            self._update_chat_display()
+            self.input_line.setEnabled(True)
+            self.input_line.setFocus()
+            self.status_label.setText("Ready.")
+            self.worker = None
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
