@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Kael Console
+Comment=Converse with your Kael AI Guardian
+Exec=kael-console
+Icon=kael-console
+Terminal=false
+Type=Application
+Categories=System;Utility;
