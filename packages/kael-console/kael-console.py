@@ -146,11 +146,30 @@ class ManageKeysDialog(QDialog):
         self.parent().populate_keys_combo() # Update parent dialog
 
     def add_key(self):
-        link_label = QLabel('<a href="https://aistudio.google.com/app/apikey">Get your API key from Google AI Studio</a>')
+        dialog = AddKeyDialog(self)
+        
+        # Create a more descriptive instructions widget
+        instructions_widget = QWidget()
+        instructions_layout = QVBoxLayout(instructions_widget)
+        
+        info_label = QLabel("Kael Console uses your personal API key to access the Cloud Animus (Gemini). For security, please generate a key and add it manually.")
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet("color: #a99ec3; padding-bottom: 5px;")
+        
+        link_label = QLabel('<a href="https://aistudio.google.com/app/apikey" style="color: #7aebbe; text-decoration: none;">1. Get your API key from Google AI Studio</a>')
         link_label.setOpenExternalLinks(True)
         
-        dialog = AddKeyDialog(self)
-        dialog.layout.insertRow(0, "Instructions:", link_label)
+        step2_label = QLabel("2. Give it a friendly name and paste the key below.")
+        step2_label.setStyleSheet("color: #a99ec3;")
+        
+        instructions_layout.addWidget(info_label)
+        instructions_layout.addWidget(link_label)
+        instructions_layout.addWidget(step2_label)
+        instructions_layout.setContentsMargins(0, 0, 0, 10)
+
+        # Add the widget to the dialog's form layout
+        dialog.layout.insertRow(0, instructions_widget)
+        
         if dialog.exec():
             name, key = dialog.get_data()
             if name and key:
