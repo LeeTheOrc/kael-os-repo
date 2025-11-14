@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Kaelic Shell
-Comment=The custom, AI-integrated shell for Kael OS
-Exec=kaelic-shell
-Icon=kaelic-shell
-Terminal=true
-Type=Application
-Categories=System;Utility;
