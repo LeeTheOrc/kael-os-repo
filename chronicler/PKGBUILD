@@ -1,0 +1,15 @@
+# Maintainer: Kael AI for The Architect
+pkgname=chronicler
+pkgver=2.0
+pkgrel=1
+pkgdesc="A tool to record system logs and terminal sessions for debugging with Kael AI."
+arch=('any')
+url="https://github.com/LeeTheOrc/Kael-OS"
+license=('GPL3')
+install=chronicler.install
+source=("chronicler.sh")
+sha256sums=('d48790b18f60788fc5caffa5f3e75e1380d377550a6bbfab9b97b25195daa7c6')
+
+package() {
+    install -Dm755 "${srcdir}/chronicler.sh" "${pkgdir}/usr/local/bin/chronicler"
+}

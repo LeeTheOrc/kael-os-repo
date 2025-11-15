@@ -1,0 +1,19 @@
+post_install() {
+    echo "Securing Chronicler with an Adamantite Core (making it immutable)..."
+    chattr +i /usr/local/bin/chronicler || echo "Warning: Could not set immutable attribute on /usr/local/bin/chronicler"
+    echo "To update chronicler in the future, first run: sudo chattr -i /usr/local/bin/chronicler"
+}
+
+pre_upgrade() {
+    echo "Unlocking Chronicler for upgrade..."
+    chattr -i /usr/local/bin/chronicler || true
+}
+
+post_upgrade() {
+    post_install
+}
+
+pre_remove() {
+    echo "Unlocking Chronicler for removal..."
+    chattr -i /usr/local/bin/chronicler || true
+}
