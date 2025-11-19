@@ -1,5 +1,5 @@
 #!/bin/bash
-# Chronicler v3.1 - The Black Box Flight Recorder
+# Chronicler v4.3 - The Guardian (Command Wrapper Edition)
 set -euo pipefail
 
 # --- CONFIGURATION ---
@@ -15,21 +15,19 @@ log() {
 }
 
 print_help() {
-    echo "Chronicler: The diligent scribe and flight recorder."
+    echo "Chronicler v4.3: The Guardian Flight Recorder"
     echo ""
     echo "Usage: chronicler [command] [options]"
     echo ""
-    echo "Default (No Args): Starts a Flight Recorder session (captures all terminal output)."
+    echo "Modes:"
+    echo "  (default)           Start a full terminal recording session (The Overseer)."
+    echo "  exec <cmd> [args]   Run a specific command wrapped in a recording session."
+    echo "  <file_path>         Snapshot a specific file."
     echo ""
-    echo "Commands:"
-    echo "  <file_path>         Smart backup: Backs up file AND DUMPS CONTENT to terminal."
-    echo "                      (This allows the Flight Recorder to capture the config state)."
-    echo "  --force <file>      Force a backup even if no changes are detected."
-    echo "  --cat <file>        Just output the file content (for logging purposes)."
-    echo "  --purge <file>      Purge old backups for a file."
-    echo "  --list <file>       List available backups."
-    echo "  --restore <file>    Interactively restore a file."
-    echo "  --help              Show this help message."
+    echo "Options:"
+    echo "  --list <file>       List backups for a file."
+    echo "  --restore <file>    Restore a file."
+    echo "  --help              Show this help."
 }
 
 dump_file_content() {
@@ -49,50 +47,120 @@ dump_file_content() {
     echo "================================================================"
 }
 
+# --- TEMPORAL SCRYING (Dynamic Change Detection) ---
+scan_for_changes() {
+    local session_log="$1"
+    local start_time="$2"
+
+    echo "" >> "$session_log"
+    echo "######################################################################" >> "$session_log"
+    echo "# CHRONICLER OVERSEER REPORT (Modified Artifacts)" >> "$session_log"
+    echo "######################################################################" >> "$session_log"
+    
+    # Use find to locate files modified after the start timestamp.
+    # We exclude common noise directories to keep the report clean.
+    CHANGES_FOUND=$(find /etc /usr/local/bin "$HOME/.config" "$HOME"         -mount         (             -path "*/.git" -o             -path "*/.cache" -o             -path "*/.local/share" -o             -path "*/node_modules" -o             -path "*/build" -o             -path "*/artifacts" -o             -path "*/.mozilla" -o             -path "*/.vscode" -o             -path "$BACKUP_DIR"         ) -prune         -o -type f -newermt "@$start_time"         ! -name "mtab"         ! -name "adjtime"         ! -name "ld.so.cache"         ! -name "*.log"         ! -name ".zsh_history"         ! -name ".bash_history"         ! -name ".lesshst"         ! -name ".viminfo"         ! -name "*.swp"         ! -name ".Xauthority"         -print 2>/dev/null || true)
+
+    if [ -z "$CHANGES_FOUND" ]; then
+        echo ">>> No significant configuration changes detected." >> "$session_log"
+        return
+    fi
+
+    IFS=$'
+'
+    for f in $CHANGES_FOUND; do
+        # Don't log the session file itself
+        if [[ "$f" == "$session_log" ]]; then continue; fi
+        
+        # Check file size (skip if > 100KB)
+        fsize=$(stat -c%s "$f" 2>/dev/null || echo 0)
+        if [ "$fsize" -gt 102400 ]; then
+            echo ">>> DETECTED MODIFICATION: $f (Skipped - Too Large: ${fsize} bytes)" >> "$session_log"
+            continue
+        fi
+
+        # Check if binary
+        if grep -qI . "$f" 2>/dev/null; then
+             echo "" >> "$session_log"
+             echo ">>> DETECTED MODIFICATION: $f" >> "$session_log"
+             echo "----------------------------------------------------------------------" >> "$session_log"
+             cat "$f" >> "$session_log" 2>/dev/null || echo "[Permission Denied - Content Protected]" >> "$session_log"
+             echo "" >> "$session_log"
+             echo "----------------------------------------------------------------------" >> "$session_log"
+        else
+             echo ">>> DETECTED MODIFICATION: $f (Skipped - Binary File)" >> "$session_log"
+        fi
+    done
+    unset IFS
+}
+
 start_recording() {
     mkdir -p "$SESSION_DIR"
     SESSION_FILE="$SESSION_DIR/session_${TIMESTAMP}.txt"
+    START_EPOCH=$(date +%s)
     
+    # Tabula Rasa: Clear screen for a fresh start
+    clear
     echo "================================================================"
-    echo ">>> CHRONICLER FLIGHT RECORDER ENGAGED"
-    echo ">>> Recording entire terminal session to:"
-    echo ">>> $SESSION_FILE"
-    echo ">>>"
-    echo ">>> Type 'exit' or press Ctrl+D to stop recording."
+    echo "   KAEL CHRONICLER v4.3 (THE GUARDIAN)   "
+    echo "================================================================"
+    echo ">>> Flight Recorder Engaged."
+    echo ">>> Log File: $SESSION_FILE"
+    echo ">>> Temporal Scrying Active: I will watch for ANY file changes."
+    echo ">>> Type 'exit' or press Ctrl+D to end session."
     echo "================================================================"
     
-    # Use 'script' to record everything to the file.
-    # -f flushes output after each write
-    # -q be quiet about start/stop messages
-    # 'script' will spawn a new shell. When that shell exits, recording stops.
+    # Start script. When user exits shell, script ends.
     script -f -q "$SESSION_FILE"
     
+    echo ">>> The Overseer is scanning for artifacts modified during this session..."
+    scan_for_changes "$SESSION_FILE" "$START_EPOCH"
     echo "================================================================"
     echo ">>> CHRONICLER FLIGHT RECORDER STOPPED"
-    echo ">>> Log saved to: $SESSION_FILE"
     echo "================================================================"
-    echo ">>> You can now upload this txt file to Kael for analysis."
 }
 
 # --- SCRIPT MAIN ---
 
 mkdir -p "$BACKUP_DIR"
+mkdir -p "$SESSION_DIR"
 
-# DEFAULT BEHAVIOR: If no arguments, start the Flight Recorder.
 if [ $# -eq 0 ]; then
     start_recording
     exit 0
 fi
 
-# --- COMMAND HANDLING ---
 case "$1" in
     --help|-h)
         print_help
         exit 0
         ;;
 
+    exec)
+        # Guardian Protocol: Run a single command wrapped in script
+        shift
+        if [ "$1" == "--" ]; then shift; fi
+        if [ $# -eq 0 ]; then echo "Error: No command provided."; exit 1; fi
+        
+        CMD_NAME=$(basename "$1")
+        CMD_ARGS="$*"
+        # Use a separate naming convention for command logs
+        SESSION_FILE="$SESSION_DIR/cmd_${TIMESTAMP}_${CMD_NAME}.log"
+        
+        # We do NOT clear the screen for exec mode as it wraps inline commands
+        # -q: Quiet start message
+        # -e: Return exit code of child process
+        # -c: Command to run
+        # We allow stdin passthrough for interactive commands like pacman
+        
+        script -q -e -c "$CMD_ARGS" "$SESSION_FILE"
+        exit_code=$?
+        
+        log "EXEC: '$CMD_ARGS' -> $SESSION_FILE (Exit: $exit_code)"
+        exit $exit_code
+        ;;
+
     --record|-r)
-        # Explicit record flag (alias for default)
         start_recording
         ;;
 
@@ -113,7 +181,6 @@ case "$1" in
     --cat)
         shift
         FILE_PATH=$1
-        # Utility to just dump a file to the log without backing up
         dump_file_content "$FILE_PATH"
         ;;
 
@@ -141,7 +208,6 @@ case "$1" in
                     cp "$FILE_BACKUP_DIR/$backup_file" "$FILE_PATH"
                     echo "Restored."
                     log "RESTORED: '$FILE_PATH' from '$backup_file'"
-                    # Dump the restored content so the log knows what's current
                     dump_file_content "$FILE_PATH"
                 else
                     echo "Restore aborted."
@@ -188,13 +254,11 @@ case "$1" in
         FILE_BACKUP_DIR="$BACKUP_DIR/$(realpath -- "$FILE_PATH" | sed 's/\//_/g')"
         mkdir -p "$FILE_BACKUP_DIR"
         
-        # Smart Check: Compare with latest backup
         LATEST_BACKUP=$(ls -t "$FILE_BACKUP_DIR" | head -n 1)
         
         if [ "$FORCE" = false ] && [ -n "$LATEST_BACKUP" ]; then
             if cmp -s "$FILE_PATH" "$FILE_BACKUP_DIR/$LATEST_BACKUP"; then
                 echo "Info: No changes detected since last backup ('$LATEST_BACKUP')."
-                # CRITICAL: Even if we skip backup, DUMP CONTENT so it appears in the Flight Recorder log.
                 dump_file_content "$FILE_PATH"
                 exit 0
             fi
@@ -207,7 +271,6 @@ case "$1" in
         echo "$BACKUP_FILE"
         log "BACKED UP: '$FILE_PATH' to '$BACKUP_FILE'"
         
-        # CRITICAL: Dump content so it appears in the Flight Recorder log.
         dump_file_content "$FILE_PATH"
         ;;
 esac

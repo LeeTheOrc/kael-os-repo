@@ -1,14 +1,14 @@
 # Maintainer: Kael AI for The Architect
 pkgname=chronicler
-pkgver=3.1
+pkgver=4.3
 pkgrel=1
-pkgdesc="Kael's diligent scribe for backing up config files and recording sessions."
+pkgdesc="Kael's Overseer: Automatic flight recorder, command wrapper, and file snapper."
 arch=('any')
 url="https://github.com/LeeTheOrc/Kael-OS"
 license=('GPL3')
-depends=('util-linux') # util-linux provides 'script'
+depends=('util-linux' 'coreutils' 'findutils')
 source=("chronicler.sh")
-sha256sums=('59d84d3a0d506cda84f612a601be7d4c1ee2728a8ac146f09aaf67cae569790b')
+sha256sums=('c0e63f3397cb967acb13ec8211464a3784f70d1e109fdf69211d4736081ef056')
 
 package() {
     install -Dm755 "$srcdir/chronicler.sh" "$pkgdir/usr/bin/chronicler"
