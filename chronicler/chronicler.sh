@@ -99,8 +99,14 @@ start_recording() {
     SESSION_FILE="$SESSION_DIR/session_${TIMESTAMP}.txt"
     START_EPOCH=$(date +%s)
     
-    # Tabula Rasa: Clear screen for a fresh start
-    clear
+    # Tabula Rasa: Full Terminal Reset
+    # We use tput reset if available to clear scrollback and state, ensuring a truly clean slate.
+    if command -v tput &>/dev/null; then
+        tput reset
+    else
+        clear
+    fi
+    
     echo "================================================================"
     echo "   KAEL CHRONICLER v4.3 (THE GUARDIAN)   "
     echo "================================================================"

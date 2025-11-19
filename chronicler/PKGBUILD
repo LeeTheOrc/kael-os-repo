@@ -6,9 +6,9 @@ pkgdesc="Kael's Overseer: Automatic flight recorder, command wrapper, and file s
 arch=('any')
 url="https://github.com/LeeTheOrc/Kael-OS"
 license=('GPL3')
-depends=('util-linux' 'coreutils' 'findutils')
+depends=('util-linux' 'coreutils' 'findutils' 'ncurses')
 source=("chronicler.sh")
-sha256sums=('c0e63f3397cb967acb13ec8211464a3784f70d1e109fdf69211d4736081ef056')
+sha256sums=('6c467aa5f6cc97bea05875da951ee330fe7635c21dbdb0ce039d001d6aa9b3a2')
 
 package() {
     install -Dm755 "$srcdir/chronicler.sh" "$pkgdir/usr/bin/chronicler"
